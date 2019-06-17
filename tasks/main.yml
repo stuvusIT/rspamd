@@ -1,0 +1,47 @@
+---
+- name: Add rspamd apt key
+  apt_key:
+    url: https://rspamd.com/apt-stable/gpg.key
+
+# Use of the distribution packages is discouraged by the rspamd devs
+- name: Add official rspamd apt repository
+  apt_repository:
+    repo: deb http://rspamd.com/apt-stable/ {{ ansible_distribution_release }} main
+    filename: rspamd
+
+- name: Install rspamd
+  apt:
+    name: rspamd
+
+- name: Write rspamd main config
+  template:
+    src: rspamd.conf.j2
+    dest: /etc/rspamd/rspamd.conf
+    mode: 0644
+  notify: Enable and restart rspamd
+
+- name: Template config overrides
+  template:
+    src: override.conf.j2
+    dest: "/etc/rspamd/override.d/{{ override.key }}.conf"
+    mode: 0644
+  loop: "{{ rspamd_config | dict2items }}"
+  loop_control:
+    loop_var: override
+  notify: Enable and restart rspamd
+
+- name: Find old config overrides to delete
+  find:
+    paths: /etc/rspamd/override.d
+    recurse: True
+    follow: True
+    hidden: True
+    exclude: "{{ rspamd_config.keys() | zip_longest([], fillvalue='.conf') | map('join') | list }}"
+  register: override_files
+
+- name: Remove old config overrides
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ override_files.files }}"
+  notify: Enable and restart rspamd

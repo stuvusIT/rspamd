@@ -1,0 +1,7 @@
+---
+- name: Enable and restart rspamd
+  service:
+    name: rspamd
+    state: restarted
+    enabled: yes
+
