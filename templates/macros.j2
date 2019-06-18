@@ -6,8 +6,13 @@
 		{#- numeric -#}
 		{{ value }}
 	{%- elif value | type == "unicode" or value | type == "AnsibleUnsafeText" or value | type == "str" or value | type == "AnsibleUnicode" -%}
-		{#- string -#}
-		{{ value | to_json }}
+		{%- if value | regex_search('^([0-9])+(.[0-9]+)?(s|m|h|d|min)$') -%}
+			{#- time -#}
+			{{ value }}
+		{%- else -%}
+			{#- string -#}
+			{{ value | to_json }}
+		{%- endif -%}
 	{%- else -%}
 		{{ "Your rspamd_config contains an invalid value"/0 }}
 	{%- endif -%}
@@ -43,6 +48,7 @@
 {% endfor -%}
 		}
 	{%- else -%}
+		{# simple type like string, number, bool -#}
 		{{ key }} = {{ insert_value(value) }};
 	{%- endif -%}
 {%- endmacro -%}
