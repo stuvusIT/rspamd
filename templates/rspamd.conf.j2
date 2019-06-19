@@ -1,0 +1,41 @@
+{% from "./macros.j2" import insert_dict %}
+# {{ ansible_managed }}
+
+.include "$CONFDIR/common.conf"
+
+options {
+    pidfile = "$RUNDIR/rspamd.pid";
+    .include "$CONFDIR/options.inc"
+    .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/options.inc"
+    .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/options.conf"
+}
+
+.include(try=true; duplicate=merge) "$CONFDIR/cgp.inc"
+.include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/cgp.inc"
+.include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/cgp.conf"
+
+
+logging {
+{% for key,value in rspamd_logging.items() %}
+    {{ insert_dict(key, value) }}
+{% endfor %}
+
+    .include "$CONFDIR/logging.inc"
+    .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/logging.inc"
+    .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/logging.conf"
+}
+{% for worker in rspamd_workers | default([]) %}
+
+worker "{{ worker.type }}" {
+{% for key, value in (worker.options | default({})).items() %}
+    {{ insert_dict(key, value) }}
+{% endfor %}
+{% if worker.type == "rspamd_proxy" %}
+{% set worker_include_name = "proxy" %}
+{% endif %}
+
+    .include "$CONFDIR/worker-{{ worker_include_name | default(worker.type) }}.inc"
+    .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/worker-{{ worker_include_name | default(worker.type) }}.inc"
+    .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/worker-{{ worker_include_name | default(worker.type) }}.conf"
+}
+{% endfor %}
