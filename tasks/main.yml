@@ -20,14 +20,40 @@
     mode: 0644
   notify: Enable and restart rspamd
 
+- name: Template local configs
+  template:
+    src: config.conf.j2
+    dest: "/etc/rspamd/local.d/{{ config.key }}.conf"
+    mode: 0644
+  loop: "{{ rspamd_local_config | dict2items }}"
+  loop_control:
+    loop_var: config
+  notify: Enable and restart rspamd
+
+- name: Find old local configs to delete
+  find:
+    paths: /etc/rspamd/local.d
+    recurse: True
+    follow: True
+    hidden: True
+    exclude: "{{ rspamd_local_config.keys() | zip_longest([], fillvalue='.conf') | map('join') | list }}"
+  register: local_files
+
+- name: Remove old local configs
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ local_files.files }}"
+  notify: Enable and restart rspamd
+
 - name: Template config overrides
   template:
-    src: override.conf.j2
-    dest: "/etc/rspamd/override.d/{{ override.key }}.conf"
+    src: config.conf.j2
+    dest: "/etc/rspamd/override.d/{{ config.key }}.conf"
     mode: 0644
-  loop: "{{ rspamd_config | dict2items }}"
+  loop: "{{ rspamd_config_overrides | dict2items }}"
   loop_control:
-    loop_var: override
+    loop_var: config
   notify: Enable and restart rspamd
 
 - name: Find old config overrides to delete
@@ -36,7 +62,7 @@
     recurse: True
     follow: True
     hidden: True
-    exclude: "{{ rspamd_config.keys() | zip_longest([], fillvalue='.conf') | map('join') | list }}"
+    exclude: "{{ rspamd_config_overrides.keys() | zip_longest([], fillvalue='.conf') | map('join') | list }}"
   register: override_files
 
 - name: Remove old config overrides
