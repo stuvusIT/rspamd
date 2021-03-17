@@ -13,14 +13,27 @@ It may be useful to use [redis](https://github.com/stuvusIT/redis/) in combinati
 
 | Name             | Required/Default                                           | Description                                                                                                                                                                                                                                                                                                                                                                 |
 |------------------|:----------------------------------------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `rspamd_config`  | `{}`                                                       | This dict configures rspamd by populating configuration files in `/etc/rspamd/override.d`. The first level of keys dictates the file name in this directory, while the dict under that key contains the configuration. The configs are placed in `override.d`, which does not interfere with package updates as well as local configs through the web controller or wizard. |
+| `rspamd_local_config`  | `{}`                                                       | This dict configures rspamd by populating configuration files in `/etc/rspamd/local.d`. The first level of keys dictates the file name in this directory, while the dict under that key contains the configuration. The configs are placed in `override.d`, which does not interfere with package updates as well as local configs through the web controller or wizard. |
+| `rspamd_config_overrides`  | `{}`                                                       | This dict configures rspamd by populating configuration files in `/etc/rspamd/override.d`. The first level of keys dictates the file name in this directory, while the dict under that key contains the configuration. The configs are placed in `override.d`, which does not interfere with package updates as well as local configs through the web controller or wizard. |
 | `rspamd_workers` | _see [defaults](defaults/main.yml) or example for default_ | List of [workers](https://rspamd.com/doc/workers/). Each entry is a dict with the keys `type` (one of `normal`, `controller`, `fuzzy` or `rspamd_proxy`) and `options` which contains the configuration. For a basic setup, you should at least configure a `normal` worker and a `controller` for convenience.                                                             |
 | `rspamd_logging` | `{type: console, systemd: true}`                           | [Logging](https://rspamd.com/doc/configuration/logging.html) configuration of rspamd                                                                                                                                                                                                                                                                                        |
 
 ## Example
 
 ```yml
-rspamd_config:
+rspamd_local_config:
+  groups:
+    group:
+      informational:
+        description: Informational (non-weighted) symbols
+        max_score: 0.0
+        symbols:
+          ASN:
+            description: Network information of the source host
+          MAILLIST:
+            description: Name of the mailing list software
+
+rspamd_config_overrides:
   redis:
     servers: 127.0.0.1
   options:

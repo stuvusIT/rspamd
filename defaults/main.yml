@@ -1,5 +1,6 @@
 ---
-rspamd_config: {}
+rspamd_local_config: {}
+rspamd_config_overrides: {}
 rspamd_logging:
   type: console
   systemd: True
