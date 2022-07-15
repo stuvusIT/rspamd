@@ -4,7 +4,7 @@
         {{ value | bool | lower }}
     {%- elif value | type == "int" or value | type == "float" -%}
         {#- numeric -#}
-        {{ value }}
+        {{ value | string }}
     {%- elif value | type == "unicode" or value | type == "AnsibleUnsafeText" or value | type == "str" or value | type == "AnsibleUnicode" -%}
         {%- if value | regex_search('^([0-9])+(.[0-9]+)?(s|m|h|d|min)$') -%}
             {#- time -#}
